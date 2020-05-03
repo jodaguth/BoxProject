@@ -51,6 +51,7 @@ def start_info():
     while True:
         send_data('all',1)
         time.sleep(1)
+
 sti = threading.Thread(target=start_info)
 st = threading.Thread(target=get_input)
 st.start()
