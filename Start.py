@@ -102,7 +102,6 @@ def find_devices():
             dev = 0
         try:
             device = ssd1306(i[1], rotate=0)
-            print(device)
             dev1 = 1
         except:
             dev1 = 0
