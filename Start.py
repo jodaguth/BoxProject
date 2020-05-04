@@ -18,6 +18,7 @@ Displays = {}
 BMEAVG = {}
 Displayssetting = {}
 global_data = {}
+bnames = []
 HEADERSIZE = 10
 SERVER = ''
 PORT = 12345
@@ -82,7 +83,8 @@ def handle_client(conn, addr):
         pass
 
 def Start_Server():
-    s.listen()
+    global global_data
+    s.listen(100)
     while True:
         conn, addr = s.accept()
         print(f"Connection from {addr} has been established.")
@@ -94,6 +96,7 @@ def Send_msg(msg1,conn1,addr=0):
     message = pickle.dumps(msg1)
     msg2 = bytes(f"{len(message):<{HEADERSIZE}}", 'utf-8') + message
     print(f'message sent to{addr}')
+    #print(msg1[0])
     conn1.send(msg2)
 
 def find_devices():
@@ -120,7 +123,7 @@ def find_devices():
         if dev1 == 1:
             b = 'box' + str(boxnum)
             Displays[b] = device
-            Displayssetting[b] = 'stats'
+            Displayssetting[b] = ['stats',b]
 
         boxnum = boxnum + 1
     return [BME280,Displays]
@@ -142,7 +145,7 @@ def read_bme280(box):
         BMEAVG[box] = temp1
         return data1,temp1
     else:
-        return 0,0
+        return [[0,0,0],[0,0]]
 
 def display_out(info,box,type1):
     if type1 == 'stats' and info[0] != 0:
@@ -176,6 +179,7 @@ while True:
     for i in Displayssetting:
         global_data[i] = read_bme280(i)
         d1 = Displayssetting[i]
+        d1 = d1[0]
         display_out(global_data[i],i,d1)
 for i in Displaysetting:
     display_out([0,0,0],i,'off')
