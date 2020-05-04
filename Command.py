@@ -4,6 +4,7 @@ import pickle
 import threading
 from kivy.app import App
 from kivy.uix.floatlayout import FloatLayout
+from kivy.uix.gridlayout import GridLayout
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.textinput import TextInput
 from kivy.uix.spinner import Spinner
@@ -14,7 +15,7 @@ from kivy.properties import ListProperty
 ##test to see commit
 
 HEADERSIZE = 10
-dataIN = [0,0]
+dataIN = [[0,0,0],0]
 conn1 = 0
 addr1 = 0
 HEADER = 64
@@ -24,41 +25,49 @@ DISCONNECT_MESSAGE = "!DISCONNECT"
 SERVER = '192.168.0.21'
 ADDR = (SERVER, PORT)
 flag1 = True
-flag2 = True
 connected = False
 iscon = False
 names = ''
 
-def get_data():
-    return names
-
-
-class MainScreen(FloatLayout):
+class MainScreen(BoxLayout):
     def __init__(self, **kwargs):
         self.buildLists()
         super(MainScreen, self).__init__(**kwargs)
+        Clock.schedule_interval(self.updateSubSpinner,0)
     
     def buildLists(self):
-        self.pickType = ['Select','Stats','Average','Graph']
+        self.pickType = ['Stats','Average','Graph']
         self.pickSubType = ['Select']
+        self.temp = '0'
+        self.hum = '0'
+        self.press = '0'
     
     def updateSubSpinner(self,text):
-            self.id.spinner1.values = names
+        self.ids.spinner_2.values = names
+        d = dataIN[0]
+        d = d[self.ids.spinner_2.text]
+        tmp,hum,press = d[0]
+        self.ids.label_tempd.text = str(tmp)
+        self.ids.label_humd.text = str(hum)
+        self.ids.label_pressd.text = str(press)
+
+    def onExit(self):
+        BoxProjectApp().stop()
+        Master = False
 
 class BoxProjectApp(App):
     def build(self):
         return MainScreen()
 
-    def update(self,*args):
-        boxselect.text = names 
 def connect_host():
     global flag1
     global iscon
     global connected
     global s
     flag1 = True
+    connected = False
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    while flag1 == True:
+    while flag1 == True and Master == True:
         try:
             s.connect((ADDR))
             connected = True
@@ -68,8 +77,6 @@ def connect_host():
         if connected == True:
             print('connected1')
             flag1 = False
-            iscon = True
-            flag2 = True
             return True
 
         else:
@@ -81,32 +88,33 @@ def connect_host():
                     connected = False
                 if connected == False and time.time() - ts >=30:
                     print("Timed Out")
-                    iscon = False
                     flag1 = False
                     return False
                 if connected == True:
                     print('Connected')
-                    iscon = True
                     flag2 = True
                     flag1 = False
                     connected = True
                     return True
 
-def get_input():     #recieving [global_data,Displayssetting]
-    global s          #     global_data[box#] = [tmp,hun,press] | Displayssetting[box#] = [displaying,list_of_boxes]  
+def get_input():    
+     #recieving on dataIN [global_data,Displayssetting]
+     #[global_data[box#] = [tmp,hun,press],[avgtmp,avghum,avgpres]]  | Displayssetting[box#] = [displaying,list_of_boxes]
+    global s           
     global dataIN
-    global connected
-    global flag2
     global names
-    while flag2 == True:
+    while Master == True:
         full_msg = b''
         new_msg = True
         while True:
             try:
-                msg = s.recv(1024)
-                if new_msg:
+                print('1')
+                msg = s.recv(10)
+                print('2')
+                if new_msg == True:
                     msglen = int(msg[:HEADERSIZE])
                     new_msg = False
+
 
                 full_msg += msg
 
@@ -114,15 +122,11 @@ def get_input():     #recieving [global_data,Displayssetting]
                     dataIN = pickle.loads(full_msg[HEADERSIZE:])
                     names = dataIN[1]
                     names = names[1]
-                    print(names)
-                    print(data)
+                    print(dataIN)
                     new_msg = True
                     full_msg = b""
             except:
-                connected = False
-                flag2 = False
-                iscon = False
-                connect_host()
+                print('couldnt recieve')
 
 def send_data(msg1,rqst=0):
     global s
@@ -141,9 +145,9 @@ def send_data(msg1,rqst=0):
         connect_host()  
 
 def start_info():
-    while True:
+    while Master == True:
         send_data('all',1)
-        time.sleep(1)
+        time.sleep(3)
 
 def run_program():
     global connected
@@ -169,10 +173,12 @@ def run_program():
         print('NO CONNECTION')
 
 if __name__ == "__main__":
-    while connect_host() == True:
+    global s
+    Master = True
+    if connect_host() == True:
         sti = threading.Thread(target=start_info)
         st = threading.Thread(target=get_input)
         st.start()
         sti.start()  
-        BoxProjectApp().run()
-
+    BoxProjectApp().run()
+s.close()
