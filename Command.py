@@ -33,31 +33,24 @@ def get_data():
     return names
 
 
-class SpinnerWidget(BoxLayout):
-    def __init__(self,**kwargs):
-        super(SpinnerWidget).__inti__(**kwargs)
-        Clock.schedule_interval(self.get_date,1)
+class MainScreen(FloatLayout):
+    def __init__(self, **kwargs):
+        self.buildLists()
+        super(MainScreen, self).__init__(**kwargs)
+    
+    def buildLists(self):
+        self.pickType = ['Select','Stats','Average','Graph']
+        self.pickSubType = ['Select']
+    
+    def updateSubSpinner(self,text):
+            self.id.spinner1.values = names
 
 class BoxProjectApp(App):
-    global names
     def build(self):
-        
-        tempdisplay = BoxLayout()
-        humdisplay = BoxLayout()
-        pressdisplay = BoxLayout()
-        spinners = BoxLayout()
-        main = BoxLayout()
-        boxselect = Spinner(text='Box 1',values=(names),size_hint=(None,None))
-        menuselect = Spinner(text='Stats',values=('stats','average','graph'),size_hint=(None,None))
-        temper = Label(text='Temperature')
-        spinners.add_widget(boxselect)
-        spinners.add_widget(menuselect)
-        main.add_widget(tempdisplay)
-        main.add_widget(humdisplay)
-        main.add_widget(pressdisplay)
-        main.add_widget(spinners)
-        return main
+        return MainScreen()
 
+    def update(self,*args):
+        boxselect.text = names 
 def connect_host():
     global flag1
     global iscon
