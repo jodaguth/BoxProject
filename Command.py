@@ -3,8 +3,8 @@ import time
 import pickle
 import threading
 from kivy.app import App
-from kivy.uix.floatlayout import Floatlayout
-from kivy.uix.boxlayout import Boxlayout
+from kivy.uix.floatlayout import FloatLayout
+from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.textinput import TextInput
 from kivy.uix.spinner import Spinner
 ##test to see commit
@@ -23,6 +23,11 @@ flag1 = True
 flag2 = True
 connected = False
 iscon = False
+
+
+
+class BoxProjectApp(App):
+    pass
 
 def connect_host():
     global flag1
@@ -43,6 +48,7 @@ def connect_host():
             flag1 = False
             iscon = True
             flag2 = True
+            return True
 
         else:
             while time.time() - ts <= 30 and flag1 == True:
@@ -55,15 +61,14 @@ def connect_host():
                     print("Timed Out")
                     iscon = False
                     flag1 = False
+                    return False
                 if connected == True:
                     print('Connected')
                     iscon = True
                     flag2 = True
                     flag1 = False
                     connected = True
-
-class BoxProjectApp(App):
-    #pass
+                    return True
 
 def get_input():
     global s
@@ -138,6 +143,10 @@ def run_program():
         print('NO CONNECTION')
 
 if __name__ == "__main__":
-    #BoxProjectApp().run()
-    connect_host()
-    run_program()
+    if connect_host() == True:
+        sti = threading.Thread(target=start_info)
+        st = threading.Thread(target=get_input)
+        st.start()
+        sti.start()      
+        BoxProjectApp().run()
+
