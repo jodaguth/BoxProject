@@ -37,7 +37,7 @@ class MainScreen(BoxLayout):
         Clock.schedule_interval(self.updateSubSpinner,0)
     
     def buildLists(self):
-        self.pickType = ['Stats','Average','Graph']
+        self.pickType = ['Statistics','Average','Graph']
         self.pickSubType = ['Select']
         self.temp = '0'
         self.hum = '0'
@@ -48,9 +48,9 @@ class MainScreen(BoxLayout):
         d = dataIN[0]
         d = d[self.ids.spinner_2.text]
         tmp,hum,press = d[0]
-        self.ids.label_tempd.text = str(tmp)
-        self.ids.label_humd.text = str(hum)
-        self.ids.label_pressd.text = str(press)
+        self.ids.label_tempd.text = str(round(tmp,2))
+        self.ids.label_humd.text = str(round(hum,2))
+        self.ids.label_pressd.text = str(round(press,2))
 
     def onExit(self):
         BoxProjectApp().stop()
@@ -151,7 +151,7 @@ def send_data(msg1,rqst=0):
 def start_info():
     while True:
         send_data('all',1)
-        time.sleep(.1)
+        time.sleep(.5)
 
 def run_program():
     global connected
