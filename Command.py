@@ -135,6 +135,12 @@ class MainScreen(BoxLayout):
         self.press = '0'
         self.disp = ['stats','average','home','off']
     
+    def updateNewSpinner(self,text):
+        iii = dataIN[1]
+        i = iii[text]
+        ii = i[0]
+        self.ids.spinner_3.text = ii
+
     def updateSubSpinner(self,text):
         self.ids.spinner_2.values = names
         d = dataIN[0]
