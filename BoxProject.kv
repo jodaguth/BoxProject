@@ -49,12 +49,8 @@
                 text: 'Currently Diplaying'
             Spinner:
                 id: spinner_3
-                text: 'stats'
+                text: ''
                 values: root.disp
                 on_text: root.send_mesg(spinner_2.text,spinner_3.text)
         
 
-        Button:
-            on_press: root.onExit()
-            text: 'Exit'
-            font_size: 50

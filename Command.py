@@ -10,6 +10,7 @@ from kivy.uix.textinput import TextInput
 from kivy.uix.spinner import Spinner
 from kivy.uix.label import Label
 from kivy.clock import Clock
+import pkg_resources.py2_warn
 
 ########################################## Initialize Some Variables ##############################
 HEADERSIZE = 10
@@ -149,6 +150,9 @@ class MainScreen(BoxLayout):
         self.ids.label_tempd.text = str(round(tmp,2))
         self.ids.label_humd.text = str(round(hum,2))
         self.ids.label_pressd.text = str(round(press,2))
+        if self.ids.spinner_3.text == '':
+            self.updateNewSpinner(self.ids.spinner_2.text)
+
     def send_mesg(txt,txt1,txt2,*args):
         tx = str(txt1)
         tx1 = str(txt2)
