@@ -177,3 +177,5 @@ while True:
         global_data[i] = read_bme280(i)
         d1 = Displayssetting[i]
         display_out(global_data[i],i,d1)
+for i in Displaysetting:
+    display_out([0,0,0],i,'off')
