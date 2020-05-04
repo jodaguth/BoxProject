@@ -7,6 +7,10 @@ from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.textinput import TextInput
 from kivy.uix.spinner import Spinner
+from kivy.uix.label import Label
+from kivy.clock import Clock
+from kivy.properties import ListProperty
+
 ##test to see commit
 
 HEADERSIZE = 10
@@ -23,11 +27,36 @@ flag1 = True
 flag2 = True
 connected = False
 iscon = False
+names = ''
+
+def get_data():
+    return names
 
 
+class SpinnerWidget(BoxLayout):
+    def __init__(self,**kwargs):
+        super(SpinnerWidget).__inti__(**kwargs)
+        Clock.schedule_interval(self.get_date,1)
 
 class BoxProjectApp(App):
-    pass
+    global names
+    def build(self):
+        
+        tempdisplay = BoxLayout()
+        humdisplay = BoxLayout()
+        pressdisplay = BoxLayout()
+        spinners = BoxLayout()
+        main = BoxLayout()
+        boxselect = Spinner(text='Box 1',values=(names),size_hint=(None,None))
+        menuselect = Spinner(text='Stats',values=('stats','average','graph'),size_hint=(None,None))
+        temper = Label(text='Temperature')
+        spinners.add_widget(boxselect)
+        spinners.add_widget(menuselect)
+        main.add_widget(tempdisplay)
+        main.add_widget(humdisplay)
+        main.add_widget(pressdisplay)
+        main.add_widget(spinners)
+        return main
 
 def connect_host():
     global flag1
@@ -70,11 +99,12 @@ def connect_host():
                     connected = True
                     return True
 
-def get_input():
-    global s
+def get_input():     #recieving [global_data,Displayssetting]
+    global s          #     global_data[box#] = [tmp,hun,press] | Displayssetting[box#] = [displaying,list_of_boxes]  
     global dataIN
     global connected
     global flag2
+    global names
     while flag2 == True:
         full_msg = b''
         new_msg = True
@@ -89,7 +119,10 @@ def get_input():
 
                 if len(full_msg)-HEADERSIZE == msglen:
                     dataIN = pickle.loads(full_msg[HEADERSIZE:])
-                    #print(data)
+                    names = dataIN[1]
+                    names = names[1]
+                    print(names)
+                    print(data)
                     new_msg = True
                     full_msg = b""
             except:
@@ -143,10 +176,10 @@ def run_program():
         print('NO CONNECTION')
 
 if __name__ == "__main__":
-    if connect_host() == True:
+    while connect_host() == True:
         sti = threading.Thread(target=start_info)
         st = threading.Thread(target=get_input)
         st.start()
-        sti.start()      
+        sti.start()  
         BoxProjectApp().run()
 
