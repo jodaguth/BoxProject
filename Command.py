@@ -11,6 +11,7 @@ from kivy.uix.spinner import Spinner
 from kivy.uix.label import Label
 from kivy.clock import Clock
 import pkg_resources.py2_warn
+from kivy.lang import Builder
 
 ########################################## Initialize Some Variables ##############################
 HEADERSIZE = 10
@@ -29,7 +30,64 @@ iscon = False
 names = []
 name = []
 ####################################################################################################
+Builder.load_string("""
+<MainScreen>:
+    
+    BoxLayout:
+        orientation:'vertical'
+        
+        BoxLayout:
+            orientation: 'horizontal'
+            Spinner:
+                id: spinner_1
+                text: 'Statistics'
+                values: root.pickType
+                on_text: root.updateSubSpinner(spinner_1.text)
+            Spinner:
+                id: spinner_2
+                text: 'box1'
+                values: root.pickSubType
+                on_text: root.updateNewSpinner(spinner_2.text)
 
+        
+        BoxLayout:
+            orientation:'horizontal'
+            Label:
+                id: label_temp
+                text: 'Temperature'
+            Label:
+                id: label_tempd
+                text: root.temp
+                BoxLayout:
+        BoxLayout:
+            orientation:'horizontal'
+            Label:
+                id: label_hum
+                text: 'Humidity'
+            Label:
+                id: label_humd
+                text: root.hum
+        BoxLayout:
+            orientation:'horizontal'
+            Label:
+                id: label_press
+                text: 'Pressure'
+            Label:
+                id: label_pressd
+                text: root.press
+        BoxLayout:
+            orientation:'horizontal'
+            Label:
+                id: label_disp
+                text: 'Currently Diplaying'
+            Spinner:
+                id: spinner_3
+                text: ''
+                values: root.disp
+                on_text: root.send_mesg(spinner_2.text,spinner_3.text)
+        
+
+""")
 def connect_host():
     global flag1
     global iscon
