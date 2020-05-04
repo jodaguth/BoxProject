@@ -8,6 +8,7 @@ from luma.oled.device import ssd1306
 from luma.core.interface.serial import i2c
 from luma.core.render import canvas
 
+
 bus1 = [smbus2.SMBus(1),i2c(port=1,address=0x3c)]
 bus3 = [smbus2.SMBus(3),i2c(port=3,address=0x3c)]
 bus4 = [smbus2.SMBus(4),i2c(port=4,address=0x3c)]
@@ -23,7 +24,12 @@ PORT = 12345
 ADDR = (SERVER, PORT)
 FORMAT = 'utf-8'
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.bind((ADDR))
+s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+try:
+    s.bind((ADDR))
+except:
+    pass
+
 Flag = 1
 
 
@@ -56,9 +62,10 @@ def handle_client(conn, addr):
                     full_msg = b""
                     if headr1 == False:
                         Displayssetting[dataIN[0]] = dataIN[1]
-                        #print('Display Data')
+                        print(f'Message recieved from {addr}')
                         #print(Displayssetting)
                     if headr1 == True:
+                        print(f'Message received from {addr}')
                         #print(dataIN)
                         if dataIN == 'all':
                             msgg = [global_data,Displayssetting]
@@ -164,6 +171,7 @@ def display_out(info,box,type1):
 find_devices()
 i = threading.Thread(target=Start_Server)
 i.start()
+
 while True:
     for i in Displayssetting:
         global_data[i] = read_bme280(i)
