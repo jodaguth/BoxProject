@@ -27,7 +27,8 @@ ADDR = (SERVER, PORT)
 flag1 = True
 connected = False
 iscon = False
-names = ''
+names = []
+name = []
 
 class MainScreen(BoxLayout):
     def __init__(self, **kwargs):
@@ -65,9 +66,8 @@ def connect_host():
     global connected
     global s
     flag1 = True
-    connected = False
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    while flag1 == True and Master == True:
+    while flag1 == True:
         try:
             s.connect((ADDR))
             connected = True
@@ -77,7 +77,8 @@ def connect_host():
         if connected == True:
             print('connected1')
             flag1 = False
-            return True
+            iscon = True
+            flag2 = True
 
         else:
             while time.time() - ts <= 30 and flag1 == True:
@@ -88,45 +89,48 @@ def connect_host():
                     connected = False
                 if connected == False and time.time() - ts >=30:
                     print("Timed Out")
+                    iscon = False
                     flag1 = False
-                    return False
                 if connected == True:
                     print('Connected')
+                    iscon = True
                     flag2 = True
                     flag1 = False
                     connected = True
-                    return True
 
-def get_input():    
-     #recieving on dataIN [global_data,Displayssetting]
-     #[global_data[box#] = [tmp,hun,press],[avgtmp,avghum,avgpres]]  | Displayssetting[box#] = [displaying,list_of_boxes]
-    global s           
+
+def get_input():
+    global s
     global dataIN
-    global names
-    while Master == True:
+    global connected
+    global flag2
+    while True:
         full_msg = b''
         new_msg = True
         while True:
             try:
-                print('1')
-                msg = s.recv(10)
-                print('2')
-                if new_msg == True:
+                msg = s.recv(1024)
+                if new_msg:
                     msglen = int(msg[:HEADERSIZE])
                     new_msg = False
-
 
                 full_msg += msg
 
                 if len(full_msg)-HEADERSIZE == msglen:
                     dataIN = pickle.loads(full_msg[HEADERSIZE:])
-                    names = dataIN[1]
-                    names = names[1]
-                    print(dataIN)
+                    for i in dataIN[1].keys():
+                        if i in names:
+                            pass
+                        else:
+                            names.append(i)
+                    
                     new_msg = True
                     full_msg = b""
             except:
-                print('couldnt recieve')
+                connected = False
+                flag2 = False
+                iscon = False
+                connect_host()
 
 def send_data(msg1,rqst=0):
     global s
@@ -145,9 +149,9 @@ def send_data(msg1,rqst=0):
         connect_host()  
 
 def start_info():
-    while Master == True:
+    while True:
         send_data('all',1)
-        time.sleep(3)
+        time.sleep(.1)
 
 def run_program():
     global connected
@@ -172,13 +176,36 @@ def run_program():
     else:
         print('NO CONNECTION')
 
+#if __name__ == "__main__":
+    #connect_host()
+
+    #if connected == True:
+        #sti = threading.Thread(target=start_info)
+        #st = threading.Thread(target=get_input)
+        #st.start()
+        #sti.start()
+    #BoxProjectApp().run()
+#while True:
+    #print(dataIN[1])
+    #inpt = input("'display' or 'stats'")
+    #if inpt == 'display':
+        #msg1 = input('Choose a box, (box1,box2,box3)')
+        #msg2 = input('Choose from "stats", "average", "difference", "home", "off": \n ')
+        #msg = [msg1,msg2]
+        #send_data(msg)
+    #if inpt == 'stats':
+        #msg = input('Choose a box, (box1,box2,box3)')
+        #print(msg)
+        #send_data(msg,1)
+
+
 if __name__ == "__main__":
     global s
     Master = True
-    if connect_host() == True:
-        sti = threading.Thread(target=start_info)
-        st = threading.Thread(target=get_input)
-        st.start()
-        sti.start()  
+    connect_host()
+    sti = threading.Thread(target=start_info)
+    st = threading.Thread(target=get_input)
+    st.start()
+    sti.start()  
     BoxProjectApp().run()
 s.close()
