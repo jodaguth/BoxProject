@@ -10,10 +10,8 @@ from kivy.uix.textinput import TextInput
 from kivy.uix.spinner import Spinner
 from kivy.uix.label import Label
 from kivy.clock import Clock
-from kivy.properties import ListProperty
 
-##test to see commit
-
+########################################## Initialize Some Variables ##############################
 HEADERSIZE = 10
 dataIN = [[0,0,0],0]
 conn1 = 0
@@ -29,36 +27,7 @@ connected = False
 iscon = False
 names = []
 name = []
-
-class MainScreen(BoxLayout):
-    def __init__(self, **kwargs):
-        self.buildLists()
-        super(MainScreen, self).__init__(**kwargs)
-        Clock.schedule_interval(self.updateSubSpinner,0)
-    
-    def buildLists(self):
-        self.pickType = ['Statistics','Average','Graph']
-        self.pickSubType = ['Select']
-        self.temp = '0'
-        self.hum = '0'
-        self.press = '0'
-    
-    def updateSubSpinner(self,text):
-        self.ids.spinner_2.values = names
-        d = dataIN[0]
-        d = d[self.ids.spinner_2.text]
-        tmp,hum,press = d[0]
-        self.ids.label_tempd.text = str(round(tmp,2))
-        self.ids.label_humd.text = str(round(hum,2))
-        self.ids.label_pressd.text = str(round(press,2))
-
-    def onExit(self):
-        BoxProjectApp().stop()
-        Master = False
-
-class BoxProjectApp(App):
-    def build(self):
-        return MainScreen()
+####################################################################################################
 
 def connect_host():
     global flag1
@@ -97,7 +66,6 @@ def connect_host():
                     flag2 = True
                     flag1 = False
                     connected = True
-
 
 def get_input():
     global s
@@ -153,51 +121,40 @@ def start_info():
         send_data('all',1)
         time.sleep(.5)
 
-def run_program():
-    global connected
-    global iscon
-    if connected == True:
-        sti = threading.Thread(target=start_info)
-        st = threading.Thread(target=get_input)
-        st.start()
-        sti.start()
-        while iscon == True:
-            print(dataIN[1])
-            inpt = input("'display' or 'stats'")
-            if inpt == 'display':
-                msg1 = input('Choose a box, (box1,box2,box3)')
-                msg2 = input('Choose from "stats", "average", "difference", "home", "off": \n ')
-                msg = [msg1,msg2]
-                send_data(msg)
-            if inpt == 'stats':
-                msg = input('Choose a box, (box1,box2,box3)')
-                print(msg)
-                send_data(msg,1)
-    else:
-        print('NO CONNECTION')
+class MainScreen(BoxLayout):
+    def __init__(self, **kwargs):
+        self.buildLists()
+        super(MainScreen, self).__init__(**kwargs)
+        Clock.schedule_interval(self.updateSubSpinner,0)
+    
+    def buildLists(self):
+        self.pickType = ['Statistics','Average','Graph']
+        self.pickSubType = ['Select']
+        self.temp = '0'
+        self.hum = '0'
+        self.press = '0'
+        self.disp = ['stats','average','home','off']
+    
+    def updateSubSpinner(self,text):
+        self.ids.spinner_2.values = names
+        d = dataIN[0]
+        d = d[self.ids.spinner_2.text]
+        tmp,hum,press = d[0]
+        self.ids.label_tempd.text = str(round(tmp,2))
+        self.ids.label_humd.text = str(round(hum,2))
+        self.ids.label_pressd.text = str(round(press,2))
+    def send_mesg(txt,txt1,txt2,*args):
+        tx = str(txt1)
+        tx1 = str(txt2)
+        txt4 = [tx,tx1]
+        send_data(txt4,0)
+    def onExit(self):
+        BoxProjectApp().stop()
+        Master = False
 
-#if __name__ == "__main__":
-    #connect_host()
-
-    #if connected == True:
-        #sti = threading.Thread(target=start_info)
-        #st = threading.Thread(target=get_input)
-        #st.start()
-        #sti.start()
-    #BoxProjectApp().run()
-#while True:
-    #print(dataIN[1])
-    #inpt = input("'display' or 'stats'")
-    #if inpt == 'display':
-        #msg1 = input('Choose a box, (box1,box2,box3)')
-        #msg2 = input('Choose from "stats", "average", "difference", "home", "off": \n ')
-        #msg = [msg1,msg2]
-        #send_data(msg)
-    #if inpt == 'stats':
-        #msg = input('Choose a box, (box1,box2,box3)')
-        #print(msg)
-        #send_data(msg,1)
-
+class BoxProjectApp(App):
+    def build(self):
+        return MainScreen()
 
 if __name__ == "__main__":
     global s
