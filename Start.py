@@ -62,9 +62,12 @@ def handle_client(conn, addr):
                     new_msg = True
                     full_msg = b""
                     if headr1 == False:
-                        Displayssetting[dataIN[0]] = dataIN[1]
+                        index = dataIN[0]
+                        ete = dataIN[1]
+                        Displayssetting[index] = [ete,index]
                         print(f'Message recieved from {addr}')
-                        #print(Displayssetting)
+                        print(dataIN[0])
+                        print(dataIN[1])
                     if headr1 == True:
                         print(f'Message received from {addr}')
                         #print(dataIN)
@@ -181,5 +184,7 @@ while True:
         d1 = Displayssetting[i]
         d1 = d1[0]
         display_out(global_data[i],i,d1)
+        #print(d1)
+        #print(Displayssetting[i])
 for i in Displaysetting:
     display_out([0,0,0],i,'off')
