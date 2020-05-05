@@ -14,7 +14,9 @@ from kivy.clock import Clock
 import pkg_resources.py2_warn
 from kivy.lang import Builder
 from kivy.core.window import Window
-
+from kivy.core.window import WindowBase
+import os, sys
+from kivy.resources import resource_add_path, resource_find
 ########################################## Initialize Some Variables ##############################
 HEADERSIZE = 10
 dataIN = [[0,0,0],0]
@@ -89,7 +91,7 @@ Builder.load_string("""
                 text: ''
                 values: root.disp
                 on_text: root.send_mesg(spinner_2.text,spinner_3.text)
-                 
+
 """)
 
 def connect_host():
@@ -252,6 +254,8 @@ class BoxProjectApp(App):
         exit()
 
 if __name__ == "__main__":
+    if hasattr(sys, '_MEIPASS'):
+        resource_add_path(os.path.join(sys._MEIPASS))
     global s
     global Master
     Master = True
