@@ -31,7 +31,7 @@ connected = False
 iscon = False
 names = []
 name = []
-flg = []
+flg = {}
 ####################################################################################################
 
 def connect_host():
@@ -160,19 +160,28 @@ class MainScreen(BoxLayout):
         iii = dataIN[1]
         i = iii[self.ids.spinner_2.text]
         ii = i[0]
-        flg.append(ii)
         d = d[self.ids.spinner_2.text]
         tmp,hum,press = d[0]
+        if self.ids.spinner_2.text in flg.keys():
+            flg[self.ids.spinner_2.text].append(ii)
+        else:
+            flg[self.ids.spinner_2.text] = []
+            flg[self.ids.spinner_2.text].append(ii)
+
         self.ids.label_tempd.text = str(round(tmp,2))
         self.ids.label_humd.text = str(round(hum,2))
         self.ids.label_pressd.text = str(round(press,2))
         if self.ids.spinner_3.text == '':
             self.updateNewSpinner(self.ids.spinner_2.text)
         else:
-            if len(flg) == 2:
-                if flg[0] != flg[1]:
-                    self.ids.spinner_3.text = ii
-                    flg = []
+            dd = flg[self.ids.spinner_2.text]
+            if len(dd) == 2:
+                flg[self.ids.spinner_2.text] = []
+                if dd[0] != dd[1]:
+                    self.updateNewSpinner(self.ids.spinner_2.text)
+                    flg[self.ids.spinner_2.text] = []
+
+                
 
 
     def send_mesg(txt,txt1,txt2,*args):
