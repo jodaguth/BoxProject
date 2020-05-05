@@ -7,7 +7,7 @@ import socket
 from luma.oled.device import ssd1306
 from luma.core.interface.serial import i2c
 from luma.core.render import canvas
-import os
+
 
 bus1 = [smbus2.SMBus(1),i2c(port=1,address=0x3c)]
 bus3 = [smbus2.SMBus(3),i2c(port=3,address=0x3c)]
@@ -16,8 +16,6 @@ busses = [bus1,bus3,bus4]
 BME280 = {}
 Displays = {}
 BMEAVG = {}
-connected_devices = []
-messages_threads = []
 Displayssetting = {}
 global_data = {}
 bnames = []
@@ -38,8 +36,6 @@ Flag = 1
 
 def handle_client(conn, addr):
     global Displayssetting
-    global connected_devices
-    global messages_threads
     global i
     global global_data
     connected = True
@@ -66,7 +62,9 @@ def handle_client(conn, addr):
                     new_msg = True
                     full_msg = b""
                     if headr1 == False:
-                        Displayssetting[dataIN[0]] = dataIN[1]
+                        index = dataIN[0]
+                        ete = dataIN[1]
+                        Displayssetting[index] = [ete,index]
                         if len(messages_threads) ==5:
                             messages_threadst = messages_threads[1:5]
                             messages_threads = []
@@ -74,7 +72,8 @@ def handle_client(conn, addr):
                             messages_threads.append(f'Message recieved from {addr}')
                         else:
                             messages_threads.append(f'Message recieved from {addr}')
-                        #print(Displayssetting)
+                        print(dataIN[0])
+                        print(dataIN[1])
                     if headr1 == True:
                         if len(messages_threads) ==5:
                             messages_threadst = messages_threads[1:5]
@@ -101,8 +100,6 @@ def handle_client(conn, addr):
 
 def Start_Server():
     global global_data
-    global connected_devices
-    global messages_threads
     s.listen(100)
     while True:
         conn, addr = s.accept()
@@ -116,7 +113,6 @@ def Start_Server():
         connected_devices.append(addr)
         thread = threading.Thread(target=handle_client,args=(conn, addr))
         thread.start()
-        #print(f"[ACTIVE CONNECTIONS] {threading.activeCount() - 2}")###########################
 
 def Send_msg(msg1,conn1,addr=0):
     message = pickle.dumps(msg1)
@@ -213,12 +209,7 @@ while True:
         d1 = Displayssetting[i]
         d1 = d1[0]
         display_out(global_data[i],i,d1)
-    print(f"[ACTIVE CONNECTIONS] {threading.activeCount() - 2}")
-    for i in connected_devices:
-        print(f'Connected To: {connected_devices[i]}')
-    print('Server Activity')
-    for i in messages_threads:
-        print(f'{messages_threads[i]}')
-    os.system("clear")
+        #print(d1)
+        #print(Displayssetting[i])
 for i in Displaysetting:
     display_out([0,0,0],i,'off')
