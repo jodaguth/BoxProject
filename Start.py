@@ -65,11 +65,23 @@ def handle_client(conn, addr):
                         index = dataIN[0]
                         ete = dataIN[1]
                         Displayssetting[index] = [ete,index]
-                        print(f'Message recieved from {addr}')
+                        if len(messages_threads) ==5:
+                            messages_threadst = messages_threads[1:5]
+                            messages_threads = []
+                            messages_threads = messages_threadst
+                            messages_threads.append(f'Message recieved from {addr}')
+                        else:
+                            messages_threads.append(f'Message recieved from {addr}')
                         print(dataIN[0])
                         print(dataIN[1])
                     if headr1 == True:
-                        print(f'Message received from {addr}')
+                        if len(messages_threads) ==5:
+                            messages_threadst = messages_threads[1:5]
+                            messages_threads = []
+                            messages_threads = messages_threadst
+                            messages_threads.append(f'Message recieved from {addr}')
+                        else:
+                            messages_threads.append(f'Message recieved from {addr}')
                         #print(dataIN)
                         if dataIN == 'all':
                             msgg = [global_data,Displayssetting]
@@ -77,7 +89,8 @@ def handle_client(conn, addr):
                             msgg = global_data[dataIN]
                         Send_msg(msgg,conn,addr)
             except:
-                print('Connection with client lost')
+                messages_threads.append('Connection with client lost')
+                connected_devices.remove(addr)
                 connected = False
 
     try:
@@ -90,15 +103,27 @@ def Start_Server():
     s.listen(100)
     while True:
         conn, addr = s.accept()
-        print(f"Connection from {addr} has been established.")
+        if len(messages_threads) ==5:
+            messages_threadst = messages_threads[1:5]
+            messages_threads = []
+            messages_threads = messages_threadst
+            messages_threads.append(f"Connection from {addr} has been established.")
+        else:
+            messages_threads.append(f"Connection from {addr} has been established.")
+        connected_devices.append(addr)
         thread = threading.Thread(target=handle_client,args=(conn, addr))
         thread.start()
-        print(f"[ACTIVE CONNECTIONS] {threading.activeCount() - 2}")
 
 def Send_msg(msg1,conn1,addr=0):
     message = pickle.dumps(msg1)
     msg2 = bytes(f"{len(message):<{HEADERSIZE}}", 'utf-8') + message
-    print(f'message sent to{addr}')
+    if len(messages_threads) ==5:
+        messages_threadst = messages_threads[1:5]
+        messages_threads = []
+        messages_threads = messages_threadst
+        messages_threads.append(f'message sent to{addr}')
+    else:
+        messages_threads.append(f'message sent to{addr}')
     #print(msg1[0])
     conn1.send(msg2)
 
