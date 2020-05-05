@@ -13,6 +13,7 @@ from kivy.uix.label import Label
 from kivy.clock import Clock
 import pkg_resources.py2_warn
 from kivy.lang import Builder
+from kivy.core.window import Window
 
 ########################################## Initialize Some Variables ##############################
 HEADERSIZE = 10
@@ -30,6 +31,7 @@ connected = False
 iscon = False
 names = []
 name = []
+flg = []
 ####################################################################################################
 
 def connect_host():
@@ -75,9 +77,13 @@ def get_input():
     global dataIN
     global connected
     global flag2
+    global Master
+
     while True:
         full_msg = b''
         new_msg = True
+        if Master == False:
+            break
         while True:
             try:
                 msg = s.recv(1024)
@@ -120,9 +126,12 @@ def send_data(msg1,rqst=0):
         connect_host()  
 
 def start_info():
+    global Master
     while True:
         send_data('all',1)
         time.sleep(.5)
+        if Master == False:
+            break
 
 class MainScreen(BoxLayout):
     def __init__(self, **kwargs):
@@ -145,8 +154,13 @@ class MainScreen(BoxLayout):
         self.ids.spinner_3.text = ii
 
     def updateSubSpinner(self,text):
+        global flg
         self.ids.spinner_2.values = names
         d = dataIN[0]
+        iii = dataIN[1]
+        i = iii[self.ids.spinner_2.text]
+        ii = i[0]
+        flg.append(ii)
         d = d[self.ids.spinner_2.text]
         tmp,hum,press = d[0]
         self.ids.label_tempd.text = str(round(tmp,2))
@@ -154,6 +168,12 @@ class MainScreen(BoxLayout):
         self.ids.label_pressd.text = str(round(press,2))
         if self.ids.spinner_3.text == '':
             self.updateNewSpinner(self.ids.spinner_2.text)
+        else:
+            if len(flg) == 2:
+                if flg[0] != flg[1]:
+                    self.ids.spinner_3.text = ii
+                    flg = []
+
 
     def send_mesg(txt,txt1,txt2,*args):
         tx = str(txt1)
@@ -165,16 +185,25 @@ class MainScreen(BoxLayout):
         Master = False
 
 class BoxProjectApp(App):
+    global Master
+    global flg
     def build(self):
+        Window.bind(on_request_close=self.on_request_close)
         return MainScreen()
+    def on_request_close(self,*args):
+        Master = False
+        BoxProjectApp().stop()
+        exit()
 
 if __name__ == "__main__":
     global s
+    global Master
     Master = True
     connect_host()
     sti = threading.Thread(target=start_info)
     st = threading.Thread(target=get_input)
+    st.daemon = True
+    sti.daemon = True
     st.start()
     sti.start() 
-    BoxProjectApp().run() 
-s.close()
+    BoxProjectApp().run()
