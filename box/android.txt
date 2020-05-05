@@ -1,0 +1,3 @@
+title=<BoxProject>
+author=<Josh>
+orientation=<portrait|landscape>
