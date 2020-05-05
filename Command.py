@@ -175,6 +175,6 @@ if __name__ == "__main__":
     sti = threading.Thread(target=start_info)
     st = threading.Thread(target=get_input)
     st.start()
-    sti.start()  
-    BoxProjectApp().run()
+    sti.start() 
+    BoxProjectApp().run() 
 s.close()
