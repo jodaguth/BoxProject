@@ -246,7 +246,7 @@ class BoxProjectApp(App):
     global Master
     global flg
     def build(self):
-        Window.bind(on_request_close=self.on_request_close)
+        #Window.bind(on_request_close=self.on_request_close)
         return MainScreen()
     def on_request_close(self,*args):
         Master = False
