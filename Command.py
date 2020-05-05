@@ -162,26 +162,13 @@ class MainScreen(BoxLayout):
         ii = i[0]
         d = d[self.ids.spinner_2.text]
         tmp,hum,press = d[0]
-        if self.ids.spinner_2.text in flg.keys():
-            flg[self.ids.spinner_2.text].append(ii)
-        else:
-            flg[self.ids.spinner_2.text] = []
-            flg[self.ids.spinner_2.text].append(ii)
-
         self.ids.label_tempd.text = str(round(tmp,2))
         self.ids.label_humd.text = str(round(hum,2))
         self.ids.label_pressd.text = str(round(press,2))
         if self.ids.spinner_3.text == '':
             self.updateNewSpinner(self.ids.spinner_2.text)
         else:
-            dd = flg[self.ids.spinner_2.text]
-            if len(dd) == 2:
-                flg[self.ids.spinner_2.text] = []
-                if dd[0] != dd[1]:
-                    self.updateNewSpinner(self.ids.spinner_2.text)
-                    flg[self.ids.spinner_2.text] = []
-
-                
+             self.updateNewSpinner(self.ids.spinner_2.text)
 
 
     def send_mesg(txt,txt1,txt2,*args):
@@ -189,6 +176,8 @@ class MainScreen(BoxLayout):
         tx1 = str(txt2)
         txt4 = [tx,tx1]
         send_data(txt4,0)
+        dataIN[1][tx][0] = tx1
+
     def onExit(self):
         BoxProjectApp().stop()
         Master = False
