@@ -155,10 +155,15 @@ def run_displays_data_collection():
             display_out(Data_on_Server['DATA'],i,d1)
 
 find_devices()
-dis = threading.Thread(target = run_displays_data_collection)
-dis.setDaemon = True
-dis.start()
+#dis = threading.Thread(target = run_displays_data_collection)
+#dis.setDaemon = True
+#dis.start()
 while inputs:
+    for i in DisplayInfo:
+            create_data()
+            d1 = DisplayInfo[i]
+            display_out(Data_on_Server['DATA'],i,d1)
+
     print('waiting on next event')
     readable, writable, exceptional = select.select(inputs, outputs,inputs,timeout)
     
