@@ -33,111 +33,76 @@ names = []
 name = []
 flg = {}
 ####################################################################################################
+Data_on_Server = {}
 
-def connect_host():
-    global flag1
-    global iscon
-    global connected
-    global s
-    flag1 = True
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    while flag1 == True:
+Data_on_Client = {}
+Data_on_Client['DATA'] = {}
+Data_on_Client['DISPLAY'] = {}
+Data_on_Client['DATA']['average'] = {}
+Data_on_Client['DATA']['current'] = {}
+
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+Connections = False
+
+
+
+
+
+def connect_host(rep=0):
+    rep1 = 0
+    while rep1 <= rep:
         try:
-            s.connect((ADDR))
-            connected = True
+            s.connect((ADDR))           
         except:
-            print("Can't connect to host")
-            ts = time.time()
-        if connected == True:
-            print('connected1')
-            flag1 = False
-            iscon = True
-            flag2 = True
-
+            rep1 += rep1
+            return False
         else:
-            while time.time() - ts <= 30 and flag1 == True:
-                try:
-                    s.connect((ADDR))
-                    connected = True
-                except:
-                    connected = False
-                if connected == False and time.time() - ts >=30:
-                    print("Timed Out")
-                    iscon = False
-                    flag1 = False
-                if connected == True:
-                    print('Connected')
-                    iscon = True
-                    flag2 = True
-                    flag1 = False
-                    connected = True
+            Connections == True
+            return True
+            rep1 = rep
+        if rep != 0:
+            time.sleep(1)
 
-def get_input():
+def manage_data(msg1,rqst=0):
     global s
-    global dataIN
-    global connected
-    global flag2
-    global Master
-
-    while True:
-        full_msg = b''
-        new_msg = True
-        if Master == False:
-            break
-        while True:
-            try:
-                msg = s.recv(1024)
-                if new_msg:
-                    msglen = int(msg[:HEADERSIZE])
-                    new_msg = False
-
-                full_msg += msg
-
-                if len(full_msg)-HEADERSIZE == msglen:
-                    dataIN = pickle.loads(full_msg[HEADERSIZE:])
-                    for i in dataIN[1].keys():
-                        if i in names:
-                            pass
-                        else:
-                            names.append(i)
-                    
-                    new_msg = True
-                    full_msg = b""
-            except:
-                connected = False
-                flag2 = False
-                iscon = False
-                connect_host()
-
-def send_data(msg1,rqst=0):
-    global s
-    global connected
+    global Data_on_Server
+    global Connections
     message = pickle.dumps(msg1)
-    hdr=HEADERSIZE - 1
-    rqst1 = bytes(rqst)
-    #print(hdr)
-    msg2 = bytes(f"{rqst}{len(message):<{hdr}}", 'utf-8') + message
-    #print(msg2)
+    msg2 = bytes(f"{rqst:<{10}}", 'utf-8') + message
     try:
         s.send(msg2)
     except:
         print('close')
         s.close()
-        connect_host()  
+        Connections == False
+    else:
+        if rqst == 0:
+            try:
+                data = s.recv(4096)
+            except:
+                s.close()
+                Connections == False
+            else:
+                Data_on_Server1 = pickle.loads(data)
+                for i in Data_on_Server1['DATA']['current']:
+                    Data_on_Client['DATA']['current'][i] = Data_on_Server1['DATA']['current'][i]
+                for i in Data_on_Server1['DATA']['average']:
+                    Data_on_Client['DATA']['average'][i] = Data_on_Server1['DATA']['average'][i]
+                for i in Data_on_Server1['DISPLAY']:
+                    Data_on_Client['DISPLAY'][i] = Data_on_Server1['DISPLAY'][i]
 
-def start_info():
-    global Master
-    while True:
-        send_data('all',1)
-        time.sleep(.5)
-        if Master == False:
-            break
+def send_display(box,disp):
+    manage_data([box,disp],1)
+
+def recieve_data():
+    manage_data('')
 
 class MainScreen(BoxLayout):
     def __init__(self, **kwargs):
         self.buildLists()
         super(MainScreen, self).__init__(**kwargs)
         Clock.schedule_interval(self.updateSubSpinner,0)
+        Clock.schedule_interval(self.get_data,0.5)
     
     def buildLists(self):
         self.pickType = ['Statistics','Average','Graph']
@@ -148,60 +113,44 @@ class MainScreen(BoxLayout):
         self.disp = ['stats','average','home','off']
     
     def updateNewSpinner(self,text):
-        iii = dataIN[1]
-        i = iii[text]
-        ii = i[0]
-        self.ids.spinner_3.text = ii
+        global Data_on_Server
+        i = Data_on_Client['DISPLAY'][text]
+        self.ids.spinner_3.text = i
+
+    def get_data(self,*args):
+        global Data_on_Server
+        global Data_on_Client
+        recieve_data()
 
     def updateSubSpinner(self,text):
-        global flg
+        global Data_on_Client
+        names =[]
+        for i in Data_on_Client['DISPLAY']:
+            names.append(i)
         self.ids.spinner_2.values = names
-        d = dataIN[0]
-        iii = dataIN[1]
-        i = iii[self.ids.spinner_2.text]
-        ii = i[0]
-        d = d[self.ids.spinner_2.text]
-        tmp,hum,press = d[0]
+        tmp,hum,press = Data_on_Client['DATA']['current'][self.ids.spinner_2.text]
         self.ids.label_tempd.text = str(round(tmp,2))
         self.ids.label_humd.text = str(round(hum,2))
         self.ids.label_pressd.text = str(round(press,2))
-        if self.ids.spinner_3.text == '':
-            self.updateNewSpinner(self.ids.spinner_2.text)
-        else:
-             self.updateNewSpinner(self.ids.spinner_2.text)
+        self.updateNewSpinner(self.ids.spinner_2.text)
 
 
     def send_mesg(txt,txt1,txt2,*args):
-        tx = str(txt1)
+        global Data_on_Client
+        bx = str(txt1)
         tx1 = str(txt2)
-        txt4 = [tx,tx1]
-        send_data(txt4,0)
-        dataIN[1][tx][0] = tx1
+        send_display(bx,tx1)
+        Data_on_Client['DISPLAY'][bx] = tx1
 
     def onExit(self):
         BoxProjectApp().stop()
-        Master = False
 
 class BoxProjectApp(App):
-    global Master
-    global flg
+    global Data_on_Server
     def build(self):
-        Window.bind(on_request_close=self.on_request_close)
         return MainScreen()
-    def on_request_close(self,*args):
-        Master = False
-        BoxProjectApp().stop()
-        exit()
 
 if __name__ == "__main__":
-    global s
-    global Master
-    Master = True
-    connect_host()
-    sti = threading.Thread(target=start_info)
-    st = threading.Thread(target=get_input)
-    st.daemon = True
-    sti.daemon = True
-    st.start()
-    sti.start() 
-    BoxProjectApp().run()
+    if connect_host() == True:
+        recieve_data()
+        BoxProjectApp().run()
