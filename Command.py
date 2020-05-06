@@ -118,9 +118,7 @@ def start_info():
         time.sleep(1)
 
 def run_program():
-    global connected
-    global iscon
-    if connected == True:
+    if connect_host():
         sti = threading.Thread(target=start_info)
         st = threading.Thread(target=get_input)
         st.start()
