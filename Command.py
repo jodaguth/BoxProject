@@ -84,7 +84,6 @@ def manage_data(msg1,rqst=0):
                 Connections == False
             else:
                 Data_on_Server1 = pickle.loads(data)
-                print(Data_on_Server1)
                 for i in Data_on_Server1['DATA']['current']:
                     Data_on_Client['DATA']['current'][i] = Data_on_Server1['DATA']['current'][i]
                 for i in Data_on_Server1['DATA']['average']:
@@ -97,7 +96,6 @@ def send_display(box,disp):
 
 def recieve_data():
     manage_data('')
-    print(Data_on_Server)
 
 class MainScreen(BoxLayout):
     def __init__(self, **kwargs):
