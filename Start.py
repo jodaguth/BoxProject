@@ -44,7 +44,7 @@ DisplayInfo = {}
 # Excpected Message is Boolean|Headersize|PickledBytes
 # Expected Data structure [BOX#,Display_Setting]
 # Sending Out Data_on_Server[DATA|DISPLAY]
-# DATA[Average|Current][box#] = [tmp,hum,press]   DISPLAY[Box#] = 'displaysetting'
+# DATA[box#][Average|Current] = [tmp,hum,press]   DISPLAY[Box#] = 'displaysetting'
 
 
 
