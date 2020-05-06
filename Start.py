@@ -109,32 +109,33 @@ def create_data():
     global Displays
     global DisplayInfo
     sd = {}
+    sd['current'] = {}
+    sd['average'] = {}
     for i in Displays.keys():
         d = read_bme280(i)
-        sd[i] = {}
-        sd[i]['current'] = d[0]
-        sd[i]['average'] = d[1]
-        Data_on_Server['DATA'] = sd
+        sd['current'][i] = d[0]
+        sd['average'][i] = d[1]
+    Data_on_Server['DATA'] = sd
         #print(sd)
-        Data_on_Server['DISPLAY'] = DisplayInfo
+    Data_on_Server['DISPLAY'] = DisplayInfo
 
 def display_out(info,box,type1):
     global Displays
-    if type1 == 'stats' and info[box]['current'][0] != 0:
-        info1 = info[box]['current']
+    if type1 == 'stats' and info['current'][box][0] != 0:
+        info1 = info['current'][box]
         with canvas(Displays[box]) as draw:
             draw.text((1, 1),"Temperture = {:.2f}".format(info1[0]) , fill="white")
             draw.text((1, 25),"Humidity = {:.2f}".format(info1[1]), fill="white")
             draw.text((1, 50),"Pressure = {:.2f}".format(info1[2]), fill="white")
             draw.text((1, 75),"", fill="white")
-    if type1 == 'average' and info[box]['current'][0] != 0:
-        info2 = info[box]['average']
+    if type1 == 'average' and info['current'][box][0] != 0:
+        info2 = info['average'][box]
         with canvas(Displays[box]) as draw:
             draw.text((1, 1)," Avg T = {:.2f}".format(info2[0]) , fill="white")
             draw.text((1, 25),"Avg H = {:.2f}".format(info2[1]), fill="white")
             draw.text((1, 50),"Avg P = {:.2f}".format(info2[2]), fill="white")
             draw.text((1, 75),"", fill="white")
-    if type1 == 'home' or info[box]['current'][0] == 0:
+    if type1 == 'home' or info['current'][box][0] == 0:
         with canvas(Displays[box]) as draw:
             draw.rectangle(Displays[box].bounding_box, outline="white", fill="black")
             draw.text((40, 20),"Hello", fill="blue")
