@@ -128,7 +128,13 @@ class MainScreen(BoxLayout):
         for i in Data_on_Client['DISPLAY']:
             names.append(i)
         self.ids.spinner_2.values = names
-        tmp,hum,press = Data_on_Client['DATA']['current'][self.ids.spinner_2.text]
+        if self.ids.spinner_1.text == 'Statistics':
+            tmp,hum,press = Data_on_Client['DATA']['current'][self.ids.spinner_2.text]
+        if self.ids.spinner_1.text == 'Average':
+            tmp,hum,press = Data_on_Client['DATA']['average'][self.ids.spinner_2.text]
+        if self.ids.spinner_1.text == 'Graph':
+            tmp,hum,press = [0,0,0]
+
         self.ids.label_tempd.text = str(round(tmp,2))
         self.ids.label_humd.text = str(round(hum,2))
         self.ids.label_pressd.text = str(round(press,2))
