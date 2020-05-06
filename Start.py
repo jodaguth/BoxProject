@@ -5,6 +5,7 @@ import threading
 import pickle
 import socket
 import select
+import queue
 from luma.oled.device import ssd1306
 from luma.core.interface.serial import i2c
 from luma.core.render import canvas
@@ -170,34 +171,45 @@ while inputs:
             print(f'new connection from {client_address}')
             connection.setblocking(0)
             inputs.append(connection)
+            message_queues[connection] = queue.Queue()
         else:
-            data = s.recv(1024)
-            if data:
-                print(f'received From{s.getpeername()}')
-                HeaderInfo = data[:1]
-                data = pickle.loads(data[10:])
-                if HeaderInfo == 1:
-                    Data_on_Server['DisplayInfo'][data[0]] = data[1]
-                else:
-                   messages_quesues[s].put(Data_on_Server)
-                   if s not in outputs:
-                       output.append(s)  
-            else:
+            try:
+                data = s.recv(1024)
+            except:
                 print(f'Closing Client {client_address}')
                 if s in outputs:
                     outputs.remove(s)
                 inputs.remove(s)
                 s.close()
                 del message_queues[s]
+            else:
+                if data:
+                    print(f'received From{s.getpeername()}')
+                    HeaderInfo = int(data[:1])
+                    data = pickle.loads(data[10:])
+                    if HeaderInfo == 1:
+                        Data_on_Server['DISPLAY'][data[0]] = data[1]
+                    else:
+                        dos = pickle.dumps(Data_on_Server)
+                        message_queues[s].put(dos)
+                        if s not in outputs:
+                            outputs.append(s)  
+                else:
+                    print(f'Closing Client {client_address}')
+                    if s in outputs:
+                        outputs.remove(s)
+                    inputs.remove(s)
+                    s.close()
+                    del message_queues[s]
     for s in writable:
         try:
             next_msg = message_queues[s].get_nowait()
-        except Queue.Empty:
-            Print('Couldnt Recieve Info wont send any')
+        except queue.Empty:
+            print('Couldnt Recieve Info wont send any')
             outputs.remove(s)
         else:
-            Print(f'Sent Message to {s.getpeername()}')
-            s.send(next_mesg)
+            print(f'Sent Message to {s.getpeername()}')
+            s.send(next_msg)
     for s in exceptional:
         print(f'Handled an Error for {s.getpeername()}')
         inputs.remove(s)
