@@ -4,128 +4,58 @@ import smbus2
 import threading
 import pickle
 import socket
+import select
+import queue
 from luma.oled.device import ssd1306
 from luma.core.interface.serial import i2c
 from luma.core.render import canvas
 
-
+############################################################# Declare available Buses############################
 bus1 = [smbus2.SMBus(1),i2c(port=1,address=0x3c)]
 bus3 = [smbus2.SMBus(3),i2c(port=3,address=0x3c)]
 bus4 = [smbus2.SMBus(4),i2c(port=4,address=0x3c)]
 busses = [bus1,bus3,bus4]
-BME280 = {}
-Displays = {}
-BMEAVG = {}
-Displayssetting = {}
-global_data = {}
-bnames = []
+#################################################################################################################
+
+############################################################## Decalare Message params ##########################
 HEADERSIZE = 10
 SERVER = ''
 PORT = 12345
 ADDR = (SERVER, PORT)
 FORMAT = 'utf-8'
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-try:
-    s.bind((ADDR))
-except:
-    pass
+##################################################################################################################
 
-Flag = 1
+############################################################### Create, set, bind and start listening ############
+server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server.setblocking(0)
+server.bind(ADDR)
+server.listen(5)
+inputs = [server]
+outputs = []
+message_queues = {}
+timeout = 1
+###################################################################################################################
+
+Data_on_Server = {}
+BMEAVG = {}
+BME280 = {}
+Displays = {}
+DisplayInfo = {}
+
+# Excpected Message is Boolean|Headersize|PickledBytes
+# Expected Data structure [BOX#,Display_Setting]
+# Sending Out Data_on_Server[DATA|DISPLAY]
+# DATA[box#][Average|Current] = [tmp,hum,press]   DISPLAY[Box#] = 'displaysetting'
 
 
-def handle_client(conn, addr):
-    global Displayssetting
-    global i
-    global global_data
-    connected = True
-    global dataIN
-    while connected ==True:
-        full_msg = b''
-        new_msg = True
-        while connected == True:
-            try:
-                msg = conn.recv(1024)
-                if new_msg:
-                    msglen = int(msg[1:HEADERSIZE])
-                    msglen1 = len(str(msglen))
-                    headr = msg[:1]
-                    headr1 = int(headr)
-                    #rint(headr1)
-                    #print(msglen)
-                    new_msg = False
 
-                full_msg += msg
 
-                if len(full_msg)-HEADERSIZE == msglen:
-                    dataIN = pickle.loads(full_msg[HEADERSIZE:])    
-                    new_msg = True
-                    full_msg = b""
-                    if headr1 == False:
-                        index = dataIN[0]
-                        ete = dataIN[1]
-                        Displayssetting[index] = [ete,index]
-                        if len(messages_threads) ==5:
-                            messages_threadst = messages_threads[1:5]
-                            messages_threads = []
-                            messages_threads = messages_threadst
-                            messages_threads.append(f'Message recieved from {addr}')
-                        else:
-                            messages_threads.append(f'Message recieved from {addr}')
-                        print(dataIN[0])
-                        print(dataIN[1])
-                    if headr1 == True:
-                        if len(messages_threads) ==5:
-                            messages_threadst = messages_threads[1:5]
-                            messages_threads = []
-                            messages_threads = messages_threadst
-                            messages_threads.append(f'Message recieved from {addr}')
-                        else:
-                            messages_threads.append(f'Message recieved from {addr}')
-                        #print(dataIN)
-                        if dataIN == 'all':
-                            msgg = [global_data,Displayssetting]
-                        else: 
-                            msgg = global_data[dataIN]
-                        Send_msg(msgg,conn,addr)
-            except:
-                messages_threads.append('Connection with client lost')
-                connected_devices.remove(addr)
-                connected = False
 
-    try:
-        conn.close()
-    except:
-        pass
 
-def Start_Server():
-    global global_data
-    s.listen(100)
-    while True:
-        conn, addr = s.accept()
-        if len(messages_threads) ==5:
-            messages_threadst = messages_threads[1:5]
-            messages_threads = []
-            messages_threads = messages_threadst
-            messages_threads.append(f"Connection from {addr} has been established.")
-        else:
-            messages_threads.append(f"Connection from {addr} has been established.")
-        connected_devices.append(addr)
-        thread = threading.Thread(target=handle_client,args=(conn, addr))
-        thread.start()
 
-def Send_msg(msg1,conn1,addr=0):
-    message = pickle.dumps(msg1)
-    msg2 = bytes(f"{len(message):<{HEADERSIZE}}", 'utf-8') + message
-    if len(messages_threads) ==5:
-        messages_threadst = messages_threads[1:5]
-        messages_threads = []
-        messages_threads = messages_threadst
-        messages_threads.append(f'message sent to{addr}')
-    else:
-        messages_threads.append(f'message sent to{addr}')
-    #print(msg1[0])
-    conn1.send(msg2)
+
+
+
 
 def find_devices():
     boxnum = 1
@@ -147,17 +77,16 @@ def find_devices():
             b = 'box'+ str(boxnum)
             BME280[b] = i[0]
             BMEAVG[b] = [0,0,0]
-            global_data[b] = 0
         if dev1 == 1:
             b = 'box' + str(boxnum)
             Displays[b] = device
-            Displayssetting[b] = ['stats',b]
+            DisplayInfo[b] = 'stats'
 
         boxnum = boxnum + 1
-    return [BME280,Displays]
 
 def read_bme280(box):
     global BMEAVG
+    global BME280
     if box in BME280.keys():
         bx = BME280[box]    
         calibration_params = bme280.load_calibration_params(bx, 0x76)
@@ -171,26 +100,42 @@ def read_bme280(box):
         pres2 = (pres1 + pres) / 2
         temp1 = [tmp2,hum2,pres2]
         BMEAVG[box] = temp1
-        return data1,temp1
+        return data1, temp1
     else:
-        return [[0,0,0],[0,0]]
+        return [0,0,0],[0,0,0]
+
+def create_data():
+    global Data_on_Server
+    global Displays
+    global DisplayInfo
+    sd = {}
+    sd['current'] = {}
+    sd['average'] = {}
+    for i in Displays.keys():
+        d = read_bme280(i)
+        sd['current'][i] = d[0]
+        sd['average'][i] = d[1]
+    Data_on_Server['DATA'] = sd
+        #print(sd)
+    Data_on_Server['DISPLAY'] = DisplayInfo
 
 def display_out(info,box,type1):
-    if type1 == 'stats' and info[0] != 0:
-        info1 = info[0]
+    global Displays
+    if type1 == 'stats' and info['current'][box][0] != 0:
+        info1 = info['current'][box]
         with canvas(Displays[box]) as draw:
             draw.text((1, 1),"Temperture = {:.2f}".format(info1[0]) , fill="white")
             draw.text((1, 25),"Humidity = {:.2f}".format(info1[1]), fill="white")
             draw.text((1, 50),"Pressure = {:.2f}".format(info1[2]), fill="white")
             draw.text((1, 75),"", fill="white")
-    if type1 == 'average' and info[0] != 0:
-        info2 = info[1]
+    if type1 == 'average' and info['current'][box][0] != 0:
+        info2 = info['average'][box]
         with canvas(Displays[box]) as draw:
             draw.text((1, 1)," Avg T = {:.2f}".format(info2[0]) , fill="white")
             draw.text((1, 25),"Avg H = {:.2f}".format(info2[1]), fill="white")
             draw.text((1, 50),"Avg P = {:.2f}".format(info2[2]), fill="white")
             draw.text((1, 75),"", fill="white")
-    if type1 == 'home' or info[0] == 0:
+    if type1 == 'home' or info['current'][box][0] == 0 and type1 != 'off':
         with canvas(Displays[box]) as draw:
             draw.rectangle(Displays[box].bounding_box, outline="white", fill="black")
             draw.text((40, 20),"Hello", fill="blue")
@@ -199,17 +144,77 @@ def display_out(info,box,type1):
          with canvas(Displays[box]) as draw:
             draw.rectangle(Displays[box].bounding_box, outline="black", fill="black")
 
-find_devices()
-i = threading.Thread(target=Start_Server)
-i.start()
 
-while True:
-    for i in Displayssetting:
-        global_data[i] = read_bme280(i)
-        d1 = Displayssetting[i]
-        d1 = d1[0]
-        display_out(global_data[i],i,d1)
-        #print(d1)
-        #print(Displayssetting[i])
-for i in Displaysetting:
-    display_out([0,0,0],i,'off')
+def run_displays_data_collection():
+    global DisplayInfo
+    global Data_on_Server
+    while True:
+        create_data()
+        for i in DisplayInfo:
+            d1 = DisplayInfo[i]
+            display_out(Data_on_Server['DATA'],i,d1)
+
+find_devices()
+dis = threading.Thread(target = run_displays_data_collection)
+dis.setDaemon = True
+dis.start()
+while inputs:
+    print('waiting on next event')
+    readable, writable, exceptional = select.select(inputs, outputs,inputs,timeout)
+    
+    if not(readable or writable or exceptional):
+        print('Time Out')
+        continue
+
+    for s in readable:
+        if s is server:
+            connection, client_address = s.accept()
+            print(f'new connection from {client_address}')
+            connection.setblocking(0)
+            inputs.append(connection)
+            message_queues[connection] = queue.Queue()
+        else:
+            try:
+                data = s.recv(1024)
+            except:
+                print(f'Closing Client {client_address}')
+                if s in outputs:
+                    outputs.remove(s)
+                inputs.remove(s)
+                s.close()
+                del message_queues[s]
+            else:
+                if data:
+                    print(f'received From{s.getpeername()}')
+                    HeaderInfo = int(data[:1])
+                    data = pickle.loads(data[10:])
+                    if HeaderInfo == 1:
+                        Data_on_Server['DISPLAY'][data[0]] = data[1]
+                    else:
+                        dos = pickle.dumps(Data_on_Server)
+                        message_queues[s].put(dos)
+                        if s not in outputs:
+                            outputs.append(s)  
+                else:
+                    print(f'Closing Client {client_address}')
+                    if s in outputs:
+                        outputs.remove(s)
+                    inputs.remove(s)
+                    s.close()
+                    del message_queues[s]
+    for s in writable:
+        try:
+            next_msg = message_queues[s].get_nowait()
+        except queue.Empty:
+            print('Couldnt Recieve Info wont send any')
+            outputs.remove(s)
+        else:
+            print(f'Sent Message to {s.getpeername()}')
+            s.send(next_msg)
+    for s in exceptional:
+        print(f'Handled an Error for {s.getpeername()}')
+        inputs.remove(s)
+        if s in outputs:
+            outputs.remove(s)
+        s.close()
+        del message_Queues[s]
