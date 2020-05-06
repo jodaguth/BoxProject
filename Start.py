@@ -4,6 +4,7 @@ import smbus2
 import threading
 import pickle
 import socket
+import select
 from luma.oled.device import ssd1306
 from luma.core.interface.serial import i2c
 from luma.core.render import canvas
@@ -43,7 +44,7 @@ DisplayInfo = {}
 # Excpected Message is Boolean|Headersize|PickledBytes
 # Expected Data structure [BOX#,Display_Setting]
 # Sending Out Data_on_Server[DATA|DISPLAY]
-# DATA[Average|Current][box#] = [tmp,hum,press]   DISPLAY[Box#] = 'displaysetting'
+# DATA[box#][Average|Current] = [tmp,hum,press]   DISPLAY[Box#] = 'displaysetting'
 
 
 
@@ -100,37 +101,39 @@ def read_bme280(box):
         BMEAVG[box] = temp1
         return data1, temp1
     else:
-        return 0,0
+        return [0,0,0],[0,0,0]
 
 def create_data():
     global Data_on_Server
     global Displays
-    for i in Displays:
+    global DisplayInfo
+    sd = {}
+    for i in Displays.keys():
         d = read_bme280(i)
-        sd = {}
         sd[i] = {}
         sd[i]['current'] = d[0]
         sd[i]['average'] = d[1]
         Data_on_Server['DATA'] = sd
-        Data_on_Server['DISPLAY'] = DiplayInfo
+        #print(sd)
+        Data_on_Server['DISPLAY'] = DisplayInfo
 
 def display_out(info,box,type1):
     global Displays
-    if type1 == 'stats' and info[current][box] != 0:
-        info1 = info['current'][box]
+    if type1 == 'stats' and info[box]['current'][0] != 0:
+        info1 = info[box]['current']
         with canvas(Displays[box]) as draw:
             draw.text((1, 1),"Temperture = {:.2f}".format(info1[0]) , fill="white")
             draw.text((1, 25),"Humidity = {:.2f}".format(info1[1]), fill="white")
             draw.text((1, 50),"Pressure = {:.2f}".format(info1[2]), fill="white")
             draw.text((1, 75),"", fill="white")
-    if type1 == 'average' and info[current][box] != 0:
-        info2 = info['average'][box]
+    if type1 == 'average' and info[box]['current'][0] != 0:
+        info2 = info[box]['average']
         with canvas(Displays[box]) as draw:
             draw.text((1, 1)," Avg T = {:.2f}".format(info2[0]) , fill="white")
             draw.text((1, 25),"Avg H = {:.2f}".format(info2[1]), fill="white")
             draw.text((1, 50),"Avg P = {:.2f}".format(info2[2]), fill="white")
             draw.text((1, 75),"", fill="white")
-    if type1 == 'home' or info['current'][box] == 0:
+    if type1 == 'home' or info[box]['current'][0] == 0:
         with canvas(Displays[box]) as draw:
             draw.rectangle(Displays[box].bounding_box, outline="white", fill="black")
             draw.text((40, 20),"Hello", fill="blue")
@@ -144,17 +147,16 @@ def run_displays_data_collection():
     global DisplayInfo
     global Data_on_Server
     while True:
-    create_data()
-    for i in DisplayInfo:
-        d1 = DisplayInfo[i]
-        display_out(Data_on_Server['DATA'],i,d1)
+        create_data()
+        for i in DisplayInfo:
+            d1 = DisplayInfo[i]
+            display_out(Data_on_Server['DATA'],i,d1)
 
 find_devices()
-dis = threading.Thread(target = run_display_data_collection)
+dis = threading.Thread(target = run_displays_data_collection)
 dis.setDaemon = True
 dis.start()
 while inputs:
-    global Data_on_Server
     print('waiting on next event')
     readable, writable, exceptional = select.select(inputs, outputs,inputs,timeout)
     
