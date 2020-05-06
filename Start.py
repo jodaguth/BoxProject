@@ -177,7 +177,7 @@ while inputs:
                 if HeaderInfo == 1:
                     Data_on_Server['DisplayInfo'][data[0]] = data[1]
                 else:
-                   messages_quesues[s].put(Data_on_Server)
+                   messages_queues[s].put(Data_on_Server)
                    if s not in outputs:
                        output.append(s)  
             else:
