@@ -135,7 +135,7 @@ def display_out(info,box,type1):
             draw.text((1, 25),"Avg H = {:.2f}".format(info2[1]), fill="white")
             draw.text((1, 50),"Avg P = {:.2f}".format(info2[2]), fill="white")
             draw.text((1, 75),"", fill="white")
-    if type1 == 'home' or info['current'][box][0] == 0:
+    if type1 == 'home' or info['current'][box][0] == 0 and type1 != 'off':
         with canvas(Displays[box]) as draw:
             draw.rectangle(Displays[box].bounding_box, outline="white", fill="black")
             draw.text((40, 20),"Hello", fill="blue")
