@@ -19,139 +19,48 @@ FORMAT = 'utf-8'
 DISCONNECT_MESSAGE = "!DISCONNECT"
 SERVER = '192.168.0.21'
 ADDR = (SERVER, PORT)
-flag1 = True
-flag2 = True
-connected = False
-iscon = False
+Data_on_Server = {}
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+
+
+
+
+
 
 def connect_host():
-    global flag1
-    global iscon
-    global connected
+    s.connect((ADDR))
+def manage_data(msg1,rqst=0):
     global s
-    flag1 = True
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    while flag1 == True:
-        try:
-            s.connect((ADDR))
-            connected = True
-        except:
-            print("Can't connect to host")
-            ts = time.time()
-        if connected == True:
-            print('connected1')
-            flag1 = False
-            iscon = True
-            flag2 = True
-
-        else:
-            while time.time() - ts <= 30 and flag1 == True:
-                try:
-                    s.connect((ADDR))
-                    connected = True
-                except:
-                    connected = False
-                if connected == False and time.time() - ts >=30:
-                    print("Timed Out")
-                    iscon = False
-                    flag1 = False
-                if connected == True:
-                    print('Connected')
-                    iscon = True
-                    flag2 = True
-                    flag1 = False
-                    connected = True
-
-
-
-#class BoxProjectApp(App):
-    #pass
-
-
-def get_input():
-    global s
-    global dataIN
-    global connected
-    global flag2
-    while flag2 == True:
-        full_msg = b''
-        new_msg = True
-        while True:
-            try:
-                msg = s.recv(1024)
-                if new_msg:
-                    msglen = int(msg[:HEADERSIZE])
-                    new_msg = False
-
-                full_msg += msg
-
-                if len(full_msg)-HEADERSIZE == msglen:
-                    dataIN = pickle.loads(full_msg[HEADERSIZE:])
-                    #print(data)
-                    new_msg = True
-                    full_msg = b""
-            except:
-                connected = False
-                flag2 = False
-                iscon = False
-                connect_host()
-
-def send_data(msg1,rqst=0):
-    global s
-    global connected
+    global Data_on_Server
     message = pickle.dumps(msg1)
-    hdr=HEADERSIZE - 1
-    rqst1 = bytes(rqst)
-    #print(hdr)
-    msg2 = bytes(f"{rqst}{len(message):<{hdr}}", 'utf-8') + message
-    #print(msg2)
+    msg2 = bytes(f"{rqst:<{10}}", 'utf-8') + message
     try:
         s.send(msg2)
     except:
         print('close')
         s.close()
-        connect_host()  
-
-def start_info():
-    while True:
-        send_data('all',1)
-        time.sleep(1)
-
-def run_program():
-    if connect_host():
-        sti = threading.Thread(target=start_info)
-        st = threading.Thread(target=get_input)
-        st.start()
-        sti.start()
-        while iscon == True:
-            print(dataIN[1])
-            inpt = input("'display' or 'stats'")
-            if inpt == 'display':
-                msg1 = input('Choose a box, (box1,box2,box3)')
-                msg2 = input('Choose from "stats", "average", "difference", "home", "off": \n ')
-                msg = [msg1,msg2]
-                send_data(msg)
-            if inpt == 'stats':
-                msg = input('Choose a box, (box1,box2,box3)')
-                print(msg)
-                send_data(msg,1)
     else:
-        print('NO CONNECTION')
+        if rqst == 0:
+            try:
+                data = s.recv(4096)
+            except:
+                s.close()
+            else:
+                Data_on_Server = pickle.loads(data)
 
-if __name__ == "__main__":
-    #BoxProjectApp().run()
-    connect_host()
-    run_program()
+def send_display(box,disp):
+    manage_data([box,disp],1)
 
-#while True:
-    #print(dataIN[1])
-    #inpt = input("'display' or 'stats'")
-    #if inpt == 'display':
-        #msg1 = input('Choose a box, (box1,box2,box3)')
-        #msg2 = input('Choose from "stats", "average", "difference", "home", "off": \n ')
-        #msg = [msg1,msg2]
-        #send_data(msg)
-    #if inpt == 'stats':
-        #msg = input('Choose a box, (box1,box2,box3)')
-        #print(msg)
-        #send_data(msg,1)
+def recieve_data():
+    manage_data('')
+
+connect_host()
+while True:
+    in1 = input('Choose')
+    if in1 == 'send':
+        in2 = input('box')
+        in3 = input('disp')
+        send_display(in2,in3)
+    if in1 == 'recv':
+        recieve_data()
