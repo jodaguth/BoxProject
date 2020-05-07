@@ -145,7 +145,7 @@ class MainScreen(BoxLayout):
             BLOCK = 0
         else:
             BLOCK = 0
-            
+
     def onExit(self):
         BoxProjectApp().stop()
 
