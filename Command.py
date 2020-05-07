@@ -33,8 +33,8 @@ names = []
 name = []
 flg = {}
 ####################################################################################################
+BLOCK = 0
 Data_on_Server = {}
-
 Data_on_Client = {}
 Data_on_Client['DATA'] = {}
 Data_on_Client['DISPLAY'] = {}
@@ -114,6 +114,7 @@ class MainScreen(BoxLayout):
     
     def updateNewSpinner(self,text):
         global Data_on_Server
+        global BLOCK
         i = Data_on_Client['DISPLAY'][text]
         self.ids.spinner_3.text = i
 
@@ -140,14 +141,20 @@ class MainScreen(BoxLayout):
         self.ids.label_pressd.text = str(round(press,2))
         self.updateNewSpinner(self.ids.spinner_2.text)
 
+    def released(*args):
+        global BLOCK
+        BLOCK = 1
 
     def send_mesg(txt,txt1,txt2,*args):
         global Data_on_Client
+        global BLOCK
         bx = str(txt1)
         tx1 = str(txt2)
-        send_display(bx,tx1)
-        Data_on_Client['DISPLAY'][bx] = tx1
-
+        if BLOCK == 1:
+            send_display(bx,tx1)
+            Data_on_Client['DISPLAY'][bx] = tx1
+        else:
+            BLOCK = 0
     def onExit(self):
         BoxProjectApp().stop()
 
