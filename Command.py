@@ -16,23 +16,14 @@ from kivy.lang import Builder
 from kivy.core.window import Window
 
 ########################################## Initialize Some Variables ##############################
-HEADERSIZE = 10
-dataIN = [[0,0,0],0]
-conn1 = 0
-addr1 = 0
-HEADER = 64
 PORT = 12345
 FORMAT = 'utf-8'
 DISCONNECT_MESSAGE = "!DISCONNECT"
 SERVER = '192.168.0.21'
 ADDR = (SERVER, PORT)
-flag1 = True
-connected = False
-iscon = False
 names = []
 name = []
-flg = {}
-####################################################################################################
+BLOCK = 0
 Data_on_Server = {}
 Data_on_Client = {}
 Data_on_Client['DATA'] = {}
@@ -41,6 +32,8 @@ Data_on_Client['DATA']['average'] = {}
 Data_on_Client['DATA']['current'] = {}
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 Connections = False
+####################################################################################################
+
 
 Builder.load_string("""
 <MainScreen>:
