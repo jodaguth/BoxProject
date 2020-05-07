@@ -251,4 +251,4 @@ while inputs:
         if s in outputs:
             outputs.remove(s)
         s.close()
-        del message_Queues[s]
+        del message_queues[s]
