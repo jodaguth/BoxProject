@@ -153,6 +153,7 @@ class MainScreen(BoxLayout):
         if BLOCK == 1:
             send_display(bx,tx1)
             Data_on_Client['DISPLAY'][bx] = tx1
+            BLOCK = 0
         else:
             BLOCK = 0
     def onExit(self):
