@@ -178,12 +178,6 @@ dis = threading.Thread(target = run_displays_data_collection)
 dis.setDaemon = True
 dis.start()
 while inputs:
-    #create_data()
-    #for i in DisplayInfo:
-            #create_data()
-            #d1 = DisplayInfo[i]
-            #display_out(Data_on_Server['DATA'],i,d1)
-
     print('waiting on next event')
     readable, writable, exceptional = select.select(inputs, outputs,inputs,timeout)
     readable, writable, exceptional = select.select(inputs, outputs,inputs,timeout1)
