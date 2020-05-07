@@ -77,7 +77,7 @@ def find_devices():
         if dev == 1:
             b = 'box'+ str(boxnum)
             BME280[b] = i[0]
-            BMEAVG[b] = [0,0,0]
+            BMEAVG[b] = [[0],[0],[0]]
         if dev1 == 1:
             b = 'box' + str(boxnum)
             Displays[b] = device
@@ -94,20 +94,27 @@ def read_bme280(box):
             calibration_params = bme280.load_calibration_params(bx, 0x76)
             data = bme280.sample(bx, 0x76, calibration_params)
         except:
-            return [0,0,0],[0,0,0]
+            return [0,0,0],[1,1,1]
         else:
             tmp,hum,pres = data.temperature,data.humidity,data.pressure
             data1 = [tmp,hum,pres]
             temp = BMEAVG[box]
             tmp1,hum1,pres1 = temp
-            tmp2 = (tmp1 + tmp) / 2
-            hum2 = (hum1 + hum) / 2
-            pres2 = (pres1 + pres) / 2
+            if len(tmp1) == 518400:
+                tmp1 = tmp1[:-1]
+                hum1 = hum1[:-1]
+                pres1 = pres1[:-1]
+            tmp1.append(tmp)
+            hum1.append(hum)
+            pres1.append(pres)
+            BMEAVG[box] = [tmp1,hum1,pres1]
+            tmp2 = sum(tmp1) / len(tmp1)
+            hum2 = sum(hum1) / len(hum1)
+            pres2 = sum(pres1) / len(pres1)
             temp1 = [tmp2,hum2,pres2]
-            BMEAVG[box] = temp1
-        return data1, temp1
+        return [data1, temp1]
     else:
-        return [0,0,0],[0,0,0]
+        return [0,0,0],[1,1,1]
 
 def create_data():
     global Data_on_Server
