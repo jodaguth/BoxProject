@@ -169,9 +169,12 @@ def run_displays_data_collection():
     while run == True:
         create_data()
         time.sleep(.5)
-        for i in DisplayInfo:
-            d1 = DisplayInfo[i]
-            display_out(Data_on_Server['DATA'],i,d1)
+        try:
+            for i in DisplayInfo:
+                d1 = DisplayInfo[i]
+                display_out(Data_on_Server['DATA'],i,d1)
+        except:
+            print('error')
 
 find_devices()
 dis = threading.Thread(target = run_displays_data_collection)
@@ -226,7 +229,7 @@ while inputs:
         try:
             next_msg = message_queues[s].get_nowait()
         except queue.Empty:
-            print('Couldnt Recieve Info wont send any')
+            #print('Couldnt Recieve Info wont send any')
             outputs.remove(s)
         else:
             print(f'Sent Message to {s.getpeername()}')
@@ -238,4 +241,4 @@ while inputs:
         if s in outputs:
             outputs.remove(s)
         s.close()
-        del message_Queues[s]
+        del message_queues[s]
