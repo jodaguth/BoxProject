@@ -44,10 +44,8 @@ Connections = False
 
 Builder.load_string("""
 <MainScreen>:
-    
     BoxLayout:
         orientation:'vertical'
-        
         BoxLayout:
             orientation: 'horizontal'
             Spinner:
@@ -60,8 +58,6 @@ Builder.load_string("""
                 text: 'box1'
                 values: root.pickSubType
                 on_text: root.updateNewSpinner(spinner_2.text)
-
-        
         BoxLayout:
             orientation:'horizontal'
             Label:
@@ -91,11 +87,12 @@ Builder.load_string("""
             orientation:'horizontal'
             Label:
                 id: label_disp
-                text: 'Currently Diplaying'
+                text: 'Currently Displaying'
             Spinner:
                 id: spinner_3
                 text: ''
                 values: root.disp
+                on_release:root.released()
                 on_text: root.send_mesg(spinner_2.text,spinner_3.text)
 
 """)
