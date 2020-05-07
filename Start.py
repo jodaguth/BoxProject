@@ -33,7 +33,8 @@ server.listen(5)
 inputs = [server]
 outputs = []
 message_queues = {}
-timeout = 1
+timeout = 60
+timeout1 = 1
 ###################################################################################################################
 
 Data_on_Server = {}
@@ -89,17 +90,21 @@ def read_bme280(box):
     global BME280
     if box in BME280.keys():
         bx = BME280[box]    
-        calibration_params = bme280.load_calibration_params(bx, 0x76)
-        data = bme280.sample(bx, 0x76, calibration_params)
-        tmp,hum,pres = data.temperature,data.humidity,data.pressure
-        data1 = [tmp,hum,pres]
-        temp = BMEAVG[box]
-        tmp1,hum1,pres1 = temp
-        tmp2 = (tmp1 + tmp) / 2
-        hum2 = (hum1 + hum) / 2
-        pres2 = (pres1 + pres) / 2
-        temp1 = [tmp2,hum2,pres2]
-        BMEAVG[box] = temp1
+        try:
+            calibration_params = bme280.load_calibration_params(bx, 0x76)
+            data = bme280.sample(bx, 0x76, calibration_params)
+        except:
+            return [0,0,0],[0,0,0]
+        else:
+            tmp,hum,pres = data.temperature,data.humidity,data.pressure
+            data1 = [tmp,hum,pres]
+            temp = BMEAVG[box]
+            tmp1,hum1,pres1 = temp
+            tmp2 = (tmp1 + tmp) / 2
+            hum2 = (hum1 + hum) / 2
+            pres2 = (pres1 + pres) / 2
+            temp1 = [tmp2,hum2,pres2]
+            BMEAVG[box] = temp1
         return data1, temp1
     else:
         return [0,0,0],[0,0,0]
@@ -135,11 +140,16 @@ def display_out(info,box,type1):
             draw.text((1, 25),"Avg H = {:.2f}".format(info2[1]), fill="white")
             draw.text((1, 50),"Avg P = {:.2f}".format(info2[2]), fill="white")
             draw.text((1, 75),"", fill="white")
-    if type1 == 'home' or info['current'][box][0] == 0 and type1 != 'off':
+    if type1 == 'home' and info['current'][box][0] != 0:
         with canvas(Displays[box]) as draw:
             draw.rectangle(Displays[box].bounding_box, outline="white", fill="black")
             draw.text((40, 20),"Hello", fill="blue")
             draw.text((15, 30),"Welcome to Home", fill="blue")
+    if info['current'][box][0] == 0 and type1 != 'off':
+        with canvas(Displays[box]) as draw:
+            draw.rectangle(Displays[box].bounding_box, outline="white", fill="black")
+            draw.text((40, 20),"Hello", fill="blue")
+            draw.text((15, 30),"Check Your Sensor", fill="blue")
     if type1 == 'off':
          with canvas(Displays[box]) as draw:
             draw.rectangle(Displays[box].bounding_box, outline="black", fill="black")
@@ -148,25 +158,28 @@ def display_out(info,box,type1):
 def run_displays_data_collection():
     global DisplayInfo
     global Data_on_Server
-    while True:
+    run = True
+    while run == True:
         create_data()
+        time.sleep(.5)
         for i in DisplayInfo:
             d1 = DisplayInfo[i]
             display_out(Data_on_Server['DATA'],i,d1)
 
 find_devices()
-#dis = threading.Thread(target = run_displays_data_collection)
-#dis.setDaemon = True
-#dis.start()
+dis = threading.Thread(target = run_displays_data_collection)
+dis.setDaemon = True
+dis.start()
 while inputs:
-    for i in DisplayInfo:
-            create_data()
-            d1 = DisplayInfo[i]
-            display_out(Data_on_Server['DATA'],i,d1)
+    #create_data()
+    #for i in DisplayInfo:
+            #create_data()
+            #d1 = DisplayInfo[i]
+            #display_out(Data_on_Server['DATA'],i,d1)
 
     print('waiting on next event')
     readable, writable, exceptional = select.select(inputs, outputs,inputs,timeout)
-    
+    readable, writable, exceptional = select.select(inputs, outputs,inputs,timeout1)
     if not(readable or writable or exceptional):
         print('Time Out')
         continue
@@ -193,6 +206,7 @@ while inputs:
                     print(f'received From{s.getpeername()}')
                     HeaderInfo = int(data[:1])
                     data = pickle.loads(data[10:])
+                    #print(data)
                     if HeaderInfo == 1:
                         Data_on_Server['DISPLAY'][data[0]] = data[1]
                     else:
@@ -216,6 +230,7 @@ while inputs:
         else:
             print(f'Sent Message to {s.getpeername()}')
             s.send(next_msg)
+            #print(pickle.loads(next_msg))
     for s in exceptional:
         print(f'Handled an Error for {s.getpeername()}')
         inputs.remove(s)
