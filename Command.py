@@ -47,8 +47,8 @@ def connect_host(rep=0):
             return False
         else:
             Connections == True
-            return True
             rep1 = rep
+            return True
         if rep != 0:
             time.sleep(1)
 
@@ -130,11 +130,11 @@ class MainScreen(BoxLayout):
         self.ids.label_pressd.text = str(round(press,2))
         self.updateNewSpinner(self.ids.spinner_2.text)
 
-    def released(*args):
+    def released(self):
         global BLOCK
         BLOCK = 1
 
-    def send_mesg(txt,txt1,txt2,*args):
+    def send_mesg(self,txt1,txt2,*args):
         global Data_on_Client
         global BLOCK
         bx = str(txt1)
@@ -145,6 +145,7 @@ class MainScreen(BoxLayout):
             BLOCK = 0
         else:
             BLOCK = 0
+
     def onExit(self):
         BoxProjectApp().stop()
 
