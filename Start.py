@@ -163,11 +163,10 @@ def display_out(info,box,type1):
             pass
     if info['current'][box][0] == 0 and type1 != 'off':
         try:
-        with canvas(Displays[box]) as draw:
+            with canvas(Displays[box]) as draw:
                 draw.rectangle(Displays[box].bounding_box, outline="white", fill="black")
                 draw.text((40, 20),"Hello", fill="blue")
                 draw.text((15, 30),"Check Your Sensor", fill="blue")
-            
         except:
             pass
     if type1 == 'off':
