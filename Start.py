@@ -141,8 +141,8 @@ def display_out(info,box,type1):
                 draw.text((1, 25),"Humidity = {:.2f}".format(info1[1]), fill="white")
                 draw.text((1, 50),"Pressure = {:.2f}".format(info1[2]), fill="white")
                 draw.text((1, 75),"", fill="white")
-                except:
-                    pass
+        except:
+            pass
     if type1 == 'average' and info['current'][box][0] != 0:
         info2 = info['average'][box]
         try:
@@ -151,30 +151,31 @@ def display_out(info,box,type1):
                 draw.text((1, 25),"Avg H = {:.2f}".format(info2[1]), fill="white")
                 draw.text((1, 50),"Avg P = {:.2f}".format(info2[2]), fill="white")
                 draw.text((1, 75),"", fill="white")
-            except:
-                pass
+        except:
+            pass
     if type1 == 'home' and info['current'][box][0] != 0:
         try:
             with canvas(Displays[box]) as draw:
                 draw.rectangle(Displays[box].bounding_box, outline="white", fill="black")
                 draw.text((40, 20),"Hello", fill="blue")
                 draw.text((15, 30),"Welcome to Home", fill="blue")
-            except:
-                pass
+        except:
+            pass
     if info['current'][box][0] == 0 and type1 != 'off':
         try:
-            with canvas(Displays[box]) as draw:
+        with canvas(Displays[box]) as draw:
                 draw.rectangle(Displays[box].bounding_box, outline="white", fill="black")
                 draw.text((40, 20),"Hello", fill="blue")
                 draw.text((15, 30),"Check Your Sensor", fill="blue")
-            except:
-                pass
+            
+        except:
+            pass
     if type1 == 'off':
          try:
             with canvas(Displays[box]) as draw:
                 draw.rectangle(Displays[box].bounding_box, outline="black", fill="black")
-            except:
-                pass
+        except:
+            pass
 
 
 def run_displays_data_collection():
